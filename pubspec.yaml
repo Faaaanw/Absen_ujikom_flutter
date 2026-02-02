@@ -9,10 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.1.0        # Untuk nembak API Laravel
-  geolocator: ^10.1.0  # Untuk ambil GPS
-  qr_flutter: ^4.1.0   # Untuk generate QR Code di layar HP
-  shared_preferences: ^2.2.1 # Untuk simpan token login (Sanctum)
+  http: ^1.1.0        #
+  geolocator: ^10.1.0  
+  qr_flutter: ^4.1.0   
+  shared_preferences: ^2.2.1 
+  image_picker: ^1.0.4  # Untuk ambil foto/galeri
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
