@@ -69,6 +69,29 @@ class ApiService {
     // Hapus data lokal
     await prefs.clear();
   }
+  Future<Map<String, dynamic>> getHomeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final url = Uri.parse('$baseUrl/home-data'); // Endpoint baru
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        return {'success': false, 'message': 'Gagal memuat data home'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error koneksi: $e'};
+    }
+  }
 
   Future<Map<String, dynamic>> generateQrToken(double lat, double long) async {
     final prefs = await SharedPreferences.getInstance();
