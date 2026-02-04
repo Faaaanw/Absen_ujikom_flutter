@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'absen_page.dart';
 import 'izin_page.dart';
-import 'overtime_page.dart'; // <--- 1. TAMBAHKAN IMPORT INI
+import 'overtime_page.dart';
 import 'login_page.dart';
 import '../services/api_service.dart';
 
@@ -36,140 +36,146 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _logout() async {
-    await _apiService.logout();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-      (route) => false,
-    );
+    // Show confirmation dialog
+    bool confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Batal")),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Ya, Keluar")),
+        ],
+      ),
+    ) ?? false;
+
+    if (confirm) {
+      await _apiService.logout();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text("Dashboard Karyawan"),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: _logout,
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF5F7FA), // Latar belakang abu-abu sangat muda
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Bagian Header Sapaan
+            // --- HEADER CUSTOM ---
             Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent,
-                borderRadius: BorderRadius.circular(15),
+              padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF2980B9), Color(0xFF6DD5FA)], // Gradasi Biru
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 30, color: Colors.blue),
-                  ),
-                  const SizedBox(width: 15),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Selamat Datang,",
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: Colors.white.withOpacity(0.9),
+                            child: const Icon(Icons.person, size: 32, color: Color(0xFF2980B9)),
+                          ),
+                          const SizedBox(width: 15),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Selamat Datang,",
+                                style: TextStyle(color: Colors.white70, fontSize: 14),
+                              ),
+                              Text(
+                                _userName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      Text(
-                        _userName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      IconButton(
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout, color: Colors.white),
+                        tooltip: "Logout",
+                      )
                     ],
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 30),
-            const Text(
-              "Menu Utama",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-
-            // Grid Menu
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              children: [
-                // 1. TOMBOL ABSENSI
-                _buildMenuCard(
-                  icon: Icons.qr_code_scanner,
-                  title: "Absensi QR",
-                  color: Colors.orange,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AbsenPage(),
+            // --- MENU GRID ---
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Menu Utama",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.1, // Membuat kartu sedikit lebih lebar
+                    children: [
+                      _buildMenuCard(
+                        icon: Icons.qr_code_scanner,
+                        title: "Absensi QR",
+                        color: Colors.orange,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AbsenPage())),
                       ),
-                    );
-                  },
-                ),
-
-                // 2. TOMBOL IZIN / CUTI
-                _buildMenuCard(
-                  icon: Icons.assignment_turned_in,
-                  title: "Pengajuan Izin",
-                  color: Colors.green,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const IzinPage()),
-                    );
-                  },
-                ),
-
-                // 3. TOMBOL LEMBUR (BARU) <--- TAMBAHKAN INI
-                _buildMenuCard(
-                  icon: Icons.more_time, // Icon Jam Plus
-                  title: "Lembur",
-                  color: Colors.purple,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OvertimePage(),
+                      _buildMenuCard(
+                        icon: Icons.assignment_turned_in_rounded,
+                        title: "Izin / Cuti",
+                        color: Colors.green,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const IzinPage())),
                       ),
-                    );
-                  },
-                ),
-
-                // 4. TOMBOL RIWAYAT
-                _buildMenuCard(
-                  icon: Icons.history,
-                  title: "Riwayat",
-                  color: Colors.blue,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Fitur Coming Soon")),
-                    );
-                  },
-                ),
-              ],
+                      _buildMenuCard(
+                        icon: Icons.access_time_filled,
+                        title: "Lembur",
+                        color: Colors.purple,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OvertimePage())),
+                      ),
+                      _buildMenuCard(
+                        icon: Icons.history_rounded,
+                        title: "Riwayat",
+                        color: Colors.blue,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Fitur Coming Soon")));
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -183,26 +189,46 @@ class _HomePageState extends State<HomePage> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: color.withOpacity(0.2),
-              child: Icon(icon, size: 30, color: color),
-            ),
-            const SizedBox(height: 15),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 32, color: color),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

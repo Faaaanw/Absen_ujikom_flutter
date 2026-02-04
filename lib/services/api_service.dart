@@ -6,8 +6,7 @@ import 'dart:io';
 class ApiService {
   // GANTI dengan IP Laptop/Komputer kamu.
   // Jangan pakai localhost untuk Android Emulator (gunakan 10.0.2.2) atau Real Device (IP LAN).
-  final String baseUrl = 'http://10.22.27.240:8002/api';
-
+  final String baseUrl = 'http://192.168.0.137:8002/api';
   Future<Map<String, dynamic>> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/login');
 
