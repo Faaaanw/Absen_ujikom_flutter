@@ -6,7 +6,7 @@ import 'dart:io';
 class ApiService {
   // GANTI dengan IP Laptop/Komputer kamu.
   // Jangan pakai localhost untuk Android Emulator (gunakan 10.0.2.2) atau Real Device (IP LAN).
-  final String baseUrl = 'http://10.113.88.240:8002/api';
+  final String baseUrl = 'http://192.168.0.131:8002/api';
   Future<Map<String, dynamic>> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/login');
 
@@ -69,6 +69,7 @@ class ApiService {
     // Hapus data lokal
     await prefs.clear();
   }
+
   Future<Map<String, dynamic>> getHomeData() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -229,6 +230,40 @@ class ApiService {
         return {
           'success': false,
           'message': responseData['message'] ?? 'Gagal memuat riwayat',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error koneksi: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> getLeaveHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final url = Uri.parse(
+      '$baseUrl/leave/history',
+    ); // Pastikan route ini ada di Laravel
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'data': responseData['data'], // List riwayat cuti
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Gagal memuat riwayat cuti',
         };
       }
     } catch (e) {

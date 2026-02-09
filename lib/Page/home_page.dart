@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart'; // Jangan lupa add package intl
+import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 // Import pages Anda
@@ -9,6 +9,7 @@ import 'absen_page.dart';
 import 'izin_page.dart';
 import 'overtime_page.dart';
 import 'login_page.dart';
+import 'notification_page.dart'; // Pastikan file ini sudah dibuat
 import '../services/api_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -46,11 +47,10 @@ class _HomePageState extends State<HomePage> {
     _fetchHomeData();
   }
 
-  // Mengambil data lengkap dari API (sesuai backend sebelumnya)
+  // Mengambil data lengkap dari API
   Future<void> _fetchHomeData() async {
     try {
-      final response = await _apiService
-          .getHomeData(); // Pastikan method ini ada di ApiService
+      final response = await _apiService.getHomeData();
 
       if (response['success'] == true) {
         final data = response['data'];
@@ -72,23 +72,18 @@ class _HomePageState extends State<HomePage> {
           _clockOut = data['clock_out'] ?? "--:--";
 
           // Logika Warna Berdasarkan Status Backend
-          String colorString =
-              data['status_color']; // 'red', 'green', 'orange', 'blue'
+          String colorString = data['status_color']; // 'red', 'green', 'orange', 'blue'
 
           if (colorString == 'red') {
-            // Sakit/Izin
             _statusColor = const Color(0xFFE74C3C);
             _statusColorLight = const Color(0xFFE74C3C).withOpacity(0.1);
           } else if (colorString == 'orange') {
-            // Lembur
             _statusColor = const Color(0xFFF39C12);
             _statusColorLight = const Color(0xFFF39C12).withOpacity(0.1);
           } else if (colorString == 'green') {
-            // Hadir
             _statusColor = const Color(0xFF27AE60);
             _statusColorLight = const Color(0xFF27AE60).withOpacity(0.1);
           } else {
-            // Regular
             _statusColor = const Color(0xFF2980B9);
             _statusColorLight = const Color(0xFF2980B9).withOpacity(0.1);
           }
@@ -98,7 +93,6 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print("Error fetching home data: $e");
-      // Fallback load local data jika API error
       _loadLocalUser();
       setState(() => _isLoading = false);
     }
@@ -127,8 +121,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _logout() async {
-    bool confirm =
-        await showDialog(
+    bool confirm = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text("Logout"),
@@ -136,17 +129,11 @@ class _HomePageState extends State<HomePage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text(
-                  "Batal",
-                  style: TextStyle(color: Colors.grey),
-                ),
+                child: const Text("Batal", style: TextStyle(color: Colors.grey)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  "Ya, Keluar",
-                  style: TextStyle(color: Colors.red),
-                ),
+                child: const Text("Ya, Keluar", style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -165,14 +152,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Tanggal Hari Ini
-    String dateNow = DateFormat(
-      'EEEE, d MMMM yyyy',
-      'id_ID',
-    ).format(DateTime.now());
+    String dateNow = DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD), // Putih kebiruan sangat muda
+      backgroundColor: const Color(0xFFF8F9FD),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -185,19 +168,16 @@ class _HomePageState extends State<HomePage> {
                     // 1. HEADER SECTION
                     _buildHeader(dateNow),
 
-                    // 2. MAIN STATUS CARD (INFO SHIFT & STATUS)
+                    // 2. MAIN STATUS CARD
                     Transform.translate(
-                      offset: const Offset(
-                        0,
-                        -40,
-                      ), // Efek floating card menumpuk header
+                      offset: const Offset(0, -40),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildStatusCard(),
                       ),
                     ),
 
-                    // 3. ABSENCE INFO (Jam Masuk/Keluar)
+                    // 3. ABSENCE INFO
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
@@ -255,18 +235,13 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHeader(String dateNow) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(
-        top: 60,
-        left: 24,
-        right: 24,
-        bottom: 60,
-      ), // Bottom padding besar untuk space card
+      padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 60),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             _statusColor,
             _statusColor.withOpacity(0.7),
-          ], // Warna menyesuaikan Status
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -281,6 +256,7 @@ class _HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Profil User
               Row(
                 children: [
                   CircleAvatar(
@@ -289,9 +265,7 @@ class _HomePageState extends State<HomePage> {
                     child: CircleAvatar(
                       radius: 24,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: const AssetImage(
-                        'assets/profile_placeholder.png',
-                      ), // Ganti image
+                      backgroundImage: const AssetImage('assets/profile_placeholder.png'),
                       child: const Icon(Icons.person, color: Colors.grey),
                     ),
                   ),
@@ -318,20 +292,51 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              IconButton(
-                onPressed: _logout,
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+              
+              // Tombol Notifikasi & Logout
+              Row(
+                children: [
+                  // TOMBOL NOTIFIKASI BARU
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationPage()),
+                      );
+                    },
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.logout,
-                    color: Colors.white,
-                    size: 20,
+                  
+                  const SizedBox(width: 8),
+
+                  // TOMBOL LOGOUT
+                  IconButton(
+                    onPressed: _logout,
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.logout,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -363,23 +368,16 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          // Baris Atas: Status & Shift
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Status Saat Ini",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
+                  const Text("Status Saat Ini", style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: _statusColorLight,
                       borderRadius: BorderRadius.circular(8),
@@ -398,25 +396,15 @@ class _HomePageState extends State<HomePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    "Jadwal Shift",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
+                  const Text("Jadwal Shift", style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: Colors.grey[600],
-                      ),
+                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
                         "$_shiftStart - $_shiftEnd",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ],
                   ),
@@ -425,8 +413,6 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const Divider(height: 25, thickness: 1, color: Color(0xFFF0F0F0)),
-
-          // Baris Bawah: Lokasi Kantor
           Row(
             children: [
               Container(
@@ -435,27 +421,17 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.blue[50],
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.location_on,
-                  color: Colors.blue,
-                  size: 20,
-                ),
+                child: const Icon(Icons.location_on, color: Colors.blue, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Lokasi Kantor",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
+                    const Text("Lokasi Kantor", style: TextStyle(color: Colors.grey, fontSize: 12)),
                     Text(
                       _officeName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -498,16 +474,10 @@ class _HomePageState extends State<HomePage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-              ),
+              Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
               Text(
                 time,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -523,7 +493,7 @@ class _HomePageState extends State<HomePage> {
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 4, // 4 Kolom agar ikon lebih compact
+        crossAxisCount: 4,
         mainAxisSpacing: 15,
         crossAxisSpacing: 15,
         childAspectRatio: 0.8,
@@ -555,13 +525,15 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (_) => const OvertimePage()),
             ),
           ),
+          // MENU RIWAYAT / NOTIFIKASI
           _buildMenuItem(
             icon: Icons.history,
             label: "Riwayat",
             color: Colors.purple,
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Fitur Coming Soon")),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
               );
             },
           ),
