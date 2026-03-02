@@ -56,44 +56,44 @@ class _HomePageState extends State<HomePage> {
         final data = response['data'];
 
         setState(() {
-          _userName = data['name'];
-          _position = data['position'];
-          _officeName = data['office'];
-          _shiftName = data['shift_name'];
-          _shiftStart = data['shift_start'] != null
-              ? _formatTime(data['shift_start'])
-              : "--:--";
-          _shiftEnd = data['shift_end'] != null
-              ? _formatTime(data['shift_end'])
-              : "--:--";
+          _userName = data['name'] ?? "Karyawan";
+          _position = data['position'] ?? "-";
+          _officeName = data['office'] ?? "-";
+          _shiftName = data['shift_name'] ?? "-";
 
-          _statusLabel = data['status_label'];
+          // --- SESUAIKAN DENGAN KEY DARI LARAVEL ---
+          _shiftStart = _formatTime(data['shift_start'] ?? "--:--");
+          _shiftEnd = _formatTime(data['shift_end'] ?? "--:--");
+          // ------------------------------------------
+
+          _statusLabel = data['status_label'] ?? "Belum Absen";
+
           _clockIn = data['clock_in'] ?? "--:--";
           _clockOut = data['clock_out'] ?? "--:--";
 
-          // Logika Warna Berdasarkan Status Backend
-          String colorString = data['status_color']; // 'red', 'green', 'orange', 'blue'
-
-          if (colorString == 'red') {
-            _statusColor = const Color(0xFFE74C3C);
-            _statusColorLight = const Color(0xFFE74C3C).withOpacity(0.1);
-          } else if (colorString == 'orange') {
-            _statusColor = const Color(0xFFF39C12);
-            _statusColorLight = const Color(0xFFF39C12).withOpacity(0.1);
-          } else if (colorString == 'green') {
-            _statusColor = const Color(0xFF27AE60);
-            _statusColorLight = const Color(0xFF27AE60).withOpacity(0.1);
-          } else {
-            _statusColor = const Color(0xFF2980B9);
-            _statusColorLight = const Color(0xFF2980B9).withOpacity(0.1);
+          // Mapping Warna Status
+          String colorString = data['status_color'] ?? "blue";
+          switch (colorString) {
+            case 'red':
+              _statusColor = const Color(0xFFE74C3C);
+              break;
+            case 'orange':
+              _statusColor = const Color(0xFFF39C12);
+              break;
+            case 'green':
+              _statusColor = const Color(0xFF27AE60);
+              break;
+            default:
+              _statusColor = const Color(0xFF2980B9);
+              break;
           }
 
+          _statusColorLight = _statusColor.withOpacity(0.1);
           _isLoading = false;
         });
       }
     } catch (e) {
       print("Error fetching home data: $e");
-      _loadLocalUser();
       setState(() => _isLoading = false);
     }
   }
@@ -121,7 +121,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _logout() async {
-    bool confirm = await showDialog(
+    bool confirm =
+        await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text("Logout"),
@@ -129,11 +130,17 @@ class _HomePageState extends State<HomePage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+                child: const Text(
+                  "Batal",
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text("Ya, Keluar", style: TextStyle(color: Colors.red)),
+                child: const Text(
+                  "Ya, Keluar",
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -152,7 +159,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    String dateNow = DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
+    String dateNow = DateFormat(
+      'EEEE, d MMMM yyyy',
+      'id_ID',
+    ).format(DateTime.now());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -218,8 +228,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                    const SizedBox(height: 15),
-
                     // 5. MENU GRID
                     _buildMenuGrid(context),
 
@@ -238,10 +246,7 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 60),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            _statusColor,
-            _statusColor.withOpacity(0.7),
-          ],
+          colors: [_statusColor, _statusColor.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -265,7 +270,9 @@ class _HomePageState extends State<HomePage> {
                     child: CircleAvatar(
                       radius: 24,
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: const AssetImage('assets/profile_placeholder.png'),
+                      backgroundImage: const AssetImage(
+                        'assets/profile_placeholder.png',
+                      ),
                       child: const Icon(Icons.person, color: Colors.grey),
                     ),
                   ),
@@ -292,7 +299,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              
+
               // Tombol Notifikasi & Logout
               Row(
                 children: [
@@ -301,7 +308,9 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const NotificationPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationPage(),
+                        ),
                       );
                     },
                     icon: Container(
@@ -317,7 +326,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
 
                   // TOMBOL LOGOUT
@@ -352,6 +361,15 @@ class _HomePageState extends State<HomePage> {
 
   // WIDGET: Kartu Status Utama
   Widget _buildStatusCard() {
+    // Logika Ikon berdasarkan Label
+    IconData statusIcon = Icons.info_outline;
+    if (_statusLabel.contains("Hadir")) statusIcon = Icons.check_circle_outline;
+    if (_statusLabel.contains("Terlambat"))
+      statusIcon = Icons.report_problem_outlined;
+    if (_statusLabel.contains("Belum")) statusIcon = Icons.not_started_outlined;
+    if (_statusLabel.contains("Sakit") || _statusLabel.contains("Izin"))
+      statusIcon = Icons.event_note;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -371,48 +389,71 @@ class _HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Status Saat Ini", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _statusColorLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _statusLabel.toUpperCase(),
+              // Bagian Kiri: Status Badge Besar
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "STATUS HARI INI",
                       style: TextStyle(
-                        color: _statusColor,
+                        color: Colors.grey,
+                        fontSize: 10,
+                        letterSpacing: 1.2,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(statusIcon, color: _statusColor, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          _statusLabel,
+                          style: TextStyle(
+                            color: _statusColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
+
+              // Bagian Kanan: Jadwal
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text("Jadwal Shift", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        "$_shiftStart - $_shiftEnd",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                    ],
+                  const Text(
+                    "JADWAL SHIFT",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "$_shiftStart - $_shiftEnd",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    _shiftName,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               ),
             ],
           ),
-          const Divider(height: 25, thickness: 1, color: Color(0xFFF0F0F0)),
+
+          const Divider(height: 30, thickness: 1, color: Color(0xFFF0F0F0)),
+
+          // Lokasi Kantor
           Row(
             children: [
               Container(
@@ -421,17 +462,31 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.blue[50],
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.location_on, color: Colors.blue, size: 20),
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.blue,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Lokasi Kantor", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text(
+                      "LOKASI PENEMPATAN",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     Text(
                       _officeName,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -474,10 +529,16 @@ class _HomePageState extends State<HomePage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
               Text(
                 time,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -487,16 +548,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   // WIDGET: Menu Grid
+  // WIDGET: Menu Grid
   Widget _buildMenuGrid(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: GridView.count(
+        // TAMBAHKAN LINE INI: Menghapus padding bawaan GridView
+        padding: const EdgeInsets.only(top: 12),
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 4,
         mainAxisSpacing: 15,
         crossAxisSpacing: 15,
-        childAspectRatio: 0.8,
+        childAspectRatio:
+            0.8, // Anda bisa ubah ke 0.9 atau 1.0 jika ingin lebih rapat lagi secara vertikal
         children: [
           _buildMenuItem(
             icon: Icons.qr_code_scanner,
@@ -525,7 +590,6 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (_) => const OvertimePage()),
             ),
           ),
-          // MENU RIWAYAT / NOTIFIKASI
           _buildMenuItem(
             icon: Icons.history,
             label: "Riwayat",
